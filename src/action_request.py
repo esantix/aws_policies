@@ -1,3 +1,5 @@
+# Author: santiago93echevarria@gmail.com
+
 from pydantic import BaseModel
 from aws_resource import AWSResource
 from iam.principal import Principal
