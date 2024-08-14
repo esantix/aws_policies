@@ -46,10 +46,10 @@ class Statement(BaseModel, validate_assignment=True):
     Principal: Union[Literal["*"], PrincipalBlock] = None
     NotPrincipal: Union[Literal["*"], PrincipalBlock] = None
     Effect: Literal["Allow", "Deny"]
-    Action: Union[str, List[str]]  = None
-    NotAction: Union[str, List[str]]  = None
-    Resource: Union[str, List[str]]  = None
-    NotResource: Union[str, List[str]]  = None
+    Action: Union[str, List[str]] = None
+    NotAction: Union[str, List[str]] = None
+    Resource: Union[str, List[str]] = None
+    NotResource: Union[str, List[str]] = None
     Condition: dict = None
 
     @model_validator(mode="after")
@@ -93,14 +93,14 @@ class RolePolicy(BaseModel, validate_assignment=True):
     @model_validator(mode="after")
     def length(self):
         MAX_LENGTH = 10240
-        json_length = len(json.dumps(self.dict(exclude_unset=True)).replace(" ",""))
+        json_length = len(json.dumps(self.model_dump(exclude_unset=True)).replace(" ", ""))
         if json_length > MAX_LENGTH:
             raise ValueError(f"Policy JSON exceeds {MAX_LENGTH}. (#Chars={json_length}, #Statements={len(self.Statement)})")
         return self
 
     def save(self, path):
         with open(path, "w") as fd:
-            json.dump(self.dict(exclude_unset=True), fd, indent=3)
+            json.dump(self.model_dump(exclude_unset=True), fd, indent=3)
 
     def allows(self, action, resource):
         """ Whether policy allows an action/resource
@@ -150,6 +150,8 @@ class RolePolicy(BaseModel, validate_assignment=True):
 
 
 class IAMRole(BaseModel):
+    """ Representation of AWS Role
+    """
     Name: str
     Policies: List[RolePolicy] = []
 
