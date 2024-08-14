@@ -5,9 +5,10 @@ from aws_resource import AWSResource
 
 ACCOUNT = "123456789012"
 REGION = "us-east-1"
+ROLE_NAME = "BucketTagger"
 
 # Role with policy
-role = Role(Arn=f"arn:aws:iam::{ACCOUNT}:role/santiago")
+role = Role(Arn=f"arn:aws:iam::{ACCOUNT}:role/{ROLE_NAME}")
 role_policy = IdentityBasedPolicy.fromfile("examples/role_policy.json")
 role.attach_policy(role_policy)
 
