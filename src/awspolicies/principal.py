@@ -2,7 +2,7 @@
 
 from typing import List
 from pydantic import BaseModel
-from iam.policy import IdentityBasedPolicy
+from awspolicies.policy import IdentityBasedPolicy
 
 
 class Principal(BaseModel):

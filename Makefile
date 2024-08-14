@@ -6,22 +6,24 @@ VENV := .venv
 export PYTHONPATH=src
 export LOG_LEVEL=DEBUG
 
-.PHONY: run all venv test
+.PHONY: venv test install run
 
 $(VENV)/bin/activate: requirements.txt
 	@python3 -m venv $(VENV)
 	@$(VENV)/bin/pip3 install -r requirements.txt
+	@which python3
 
 venv: $(VENV)/bin/activate
 
 
 run: venv
-	python3 examples/action_example.py
+	@python3 examples/action_example.py
 
-test:
-	coverage run -m unittest discover -s ./tests -p 'test_*.py'
-	coverage report -m
+test: venv
+	@coverage run -m unittest discover -s ./tests/unit_tests -p 'test_*.py'
+	@coverage report -m
 
-
-
-all: venv run
+install: venv
+	@pip install --upgrade pip 
+	@pip install -e . 
+	@pip list | grep AWSPolicies

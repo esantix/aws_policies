@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "AWSPolicies"
-version = "0.0.1-beta" 
-description = "A sample Python project"
+description="AWS Policies Utils"
+version = "0.0.2" 
 readme = "README.md"
 requires-python = ">=3.8"
 license = {file = "LICENSE.txt"}
@@ -24,7 +24,6 @@ classifiers = [
   "Programming Language :: Python :: 3 :: Only",
 ]
 dynamic = ["dependencies"]
-
 
 [project.urls]
 "Homepage" = "https://github.com/esantix/aws_policies"

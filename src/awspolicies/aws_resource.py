@@ -3,7 +3,7 @@
 import re
 from pydantic import BaseModel, model_validator
 from typing import List
-from iam.policy import ResourceBasedPolicy
+from awspolicies.policy import ResourceBasedPolicy
 
 REGIONS = ["us-east-1", "us-east-2",
            "us-west-1", "us-west-2",

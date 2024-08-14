@@ -1,5 +1,5 @@
 import unittest
-from iam.principal import Role
+from awspolicies.principal import Role
 
 
 class TestIAMRole(unittest.TestCase):

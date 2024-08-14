@@ -3,7 +3,7 @@ import shutil
 import tempfile
 import json
 import unittest
-from iam.policy import IdentityBasedPolicy, ResourceBasedPolicy
+from awspolicies.policy import IdentityBasedPolicy
 
 
 class TestIAMPolicy(unittest.TestCase):

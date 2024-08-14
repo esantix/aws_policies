@@ -1,7 +1,7 @@
-from iam.principal import Role
-from iam.policy import IdentityBasedPolicy, ResourceBasedPolicy
-from action_request import ActionRequest
-from aws_resource import AWSResource
+from awspolicies.principal import Role
+from awspolicies.policy import IdentityBasedPolicy, ResourceBasedPolicy
+from awspolicies.action_request import ActionRequest
+from awspolicies.aws_resource import AWSResource
 
 ACCOUNT = "123456789012"
 REGION = "us-east-1"
