@@ -12,7 +12,5 @@ jobs:
    steps:
    - name: checkout repo
      uses: actions/checkout@main
-   - name: install
-     run: make install  
-   - name: build application
+   - name: Run unit tests
      run: make test
