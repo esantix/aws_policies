@@ -1,4 +1,4 @@
-name: python-app
+name: tests
 
 on:
   push:
@@ -7,10 +7,12 @@ on:
     branches: [ main ]
 
 jobs:
- build:
+ test:
    runs-on: ubuntu-latest
    steps:
    - name: checkout repo
      uses: actions/checkout@main
+   - name: install
+     run: make install  
    - name: build application
      run: make test

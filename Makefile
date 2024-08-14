@@ -8,10 +8,9 @@ export LOG_LEVEL=DEBUG
 
 .PHONY: venv test install run
 
-$(VENV)/bin/activate: requirements.txt
+$(VENV)/bin/activate: requirements.txt requirements.dev.txt
 	@python3 -m venv $(VENV)
-	@$(VENV)/bin/pip3 install -r requirements.txt
-	@which python3
+	@$(VENV)/bin/pip3 install -r requirements.dev.txt
 
 venv: $(VENV)/bin/activate
 
