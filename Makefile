@@ -16,10 +16,12 @@ venv: $(VENV)/bin/activate
 
 
 run: venv
-	python3 $(PYTHONPATH)/iam.py
+	python3 examples/action_example.py
 
 test:
 	coverage run -m unittest discover -s ./tests -p 'test_*.py'
 	coverage report -m
+
+
 
 all: venv run

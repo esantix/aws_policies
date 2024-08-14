@@ -3,13 +3,13 @@ import shutil
 import tempfile
 import json
 import unittest
-from iam_policy import IdentityBasedPolicy, ResourceBasedPolicy
+from iam.policy import IdentityBasedPolicy, ResourceBasedPolicy
 
 
 class TestIAMPolicy(unittest.TestCase):
 
     def setUp(self):
-        self.example_policy_dir = 'tests/example.json'
+        self.example_policy_dir = 'examples/role_policy.json'
         self.test_dir = tempfile.mkdtemp()
 
     def tearDown(self):

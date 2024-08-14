@@ -1,9 +1,9 @@
 import unittest
-from iam_role import IAMRole
+from iam.principal import Role
 
 
 class TestIAMRole(unittest.TestCase):
 
     def test_placeholder(self):
-        IAMRole(Name="Fake_role")
+        Role(Name="Fake_role")
         self.assertTrue(True)

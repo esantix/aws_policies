@@ -4,7 +4,6 @@ import json
 import re
 from pydantic import BaseModel, model_validator, ValidationError
 from typing import Optional, Literal, List, Union
-from action_request import ActionRequest
 
 
 def match(regex: Union[str, None], string: str) -> bool:
@@ -100,10 +99,10 @@ class PrincipalBlock(BaseModel, validate_assignment=True):
     """ Representation of AWS IAM Policy Statement Principal Block
     """
 
-    AWS: List[str] = None
-    Federated: List[str] = None
-    Service: List[str] = None
-    CanonicalUser: List[str] = None
+    AWS: Union[str, List[str]] = None
+    Federated: Union[str, List[str]] = None
+    Service: Union[str, List[str]] = None
+    CanonicalUser: Union[str, List[str]] = None
 
 
 class Statement(BaseModel, validate_assignment=True):
@@ -148,7 +147,7 @@ class Statement(BaseModel, validate_assignment=True):
             return None
 
 
-class IAMPolicy(BaseModel, validate_assignment=True):
+class Policy(BaseModel, validate_assignment=True):
     """ Representation of AWS IAM Policy
 
     Reference: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies.html
@@ -169,7 +168,7 @@ class IAMPolicy(BaseModel, validate_assignment=True):
         with open(path, "w") as fd:
             json.dump(self.model_dump(exclude_unset=True), fd, indent=3)
 
-    def __evaluate(self, action_request: ActionRequest) -> bool:
+    def __evaluate(self, action_request) -> bool:
         """ Whether policy allows an action/resource
 
             Reference: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html
@@ -190,7 +189,7 @@ class IAMPolicy(BaseModel, validate_assignment=True):
         else:
             return None
 
-    def evaluate(self, action_request: ActionRequest):
+    def evaluate(self, action_request):
         return self.__evaluate(action_request)
 
     def __add__(self, new):
@@ -198,7 +197,7 @@ class IAMPolicy(BaseModel, validate_assignment=True):
             raise ValueError("Policies have different Version")
 
         statements = self.Statement + new.Statement
-        return IAMPolicy(Version=self.Version, Statement=statements)
+        return Policy(Version=self.Version, Statement=statements)
 
     def __iadd__(self, new):
         return self + new.Statement
@@ -220,22 +219,20 @@ class IAMPolicy(BaseModel, validate_assignment=True):
             raise ValueError(f"{path} is not a valid {cls.__name__}")
 
 
-class IdentityBasedPolicy(IAMPolicy):
+class IdentityBasedPolicy(Policy):
     """ Identity-based policies are attached to an IAM identity (user, group of users, or role)
         and grant permissions to IAM entities (users and roles).
     """
 
 
-class ResourceBasedPolicy(IAMPolicy, validate_assignment=True):
+class ResourceBasedPolicy(Policy):
     """ Resource-based policies grant permissions to the principal (account, user, role, and
         session principals such as role sessions and IAM federated users ) specified as the principal.
     """
 
     @model_validator(mode="after")
     def principal(self):
-        print(self)
         for statement in self.Statement:
-            print(statement)
             if statement.Principal is None:
                 raise ValueError("ResourceBasedPolicies staements must have a defined Principal")
         return self

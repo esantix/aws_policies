@@ -1,0 +1,16 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "FullAccessToSpecificUser",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::123456789:user/ExampleUser"
+            },
+            "Action": "s3:AddTag",
+            "Resource": [
+                "arn:aws:s3:::example-bucket/*"
+            ]
+        }
+    ]
+}
