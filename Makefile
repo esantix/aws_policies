@@ -19,7 +19,7 @@ run: venv
 	@python3 examples/action_example.py
 
 test: venv
-	@coverage run -m unittest discover -s ./tests/unit_tests -p 'test_*.py'
+	@coverage run -m unittest discover -s ./tests -p 'test_*.py'
 	@coverage report -m
 
 install: venv
