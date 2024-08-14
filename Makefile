@@ -1,12 +1,12 @@
 VENV := .venv
 
-.DEFAULT_GOAL := all
+.DEFAULT_GOAL := run
 
 
 export PYTHONPATH=src
 export LOG_LEVEL=DEBUG
 
-.PHONY: run all venv
+.PHONY: run all venv test
 
 $(VENV)/bin/activate: requirements.txt
 	@python3 -m venv $(VENV)
@@ -15,4 +15,11 @@ $(VENV)/bin/activate: requirements.txt
 venv: $(VENV)/bin/activate
 
 
-all: venv
+run: venv
+	python3 $(PYTHONPATH)/iam.py
+
+test:
+	coverage run -m unittest discover -s ./tests -p 'test_*.py'
+	coverage report -m
+
+all: venv run

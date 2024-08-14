@@ -1,0 +1,29 @@
+#
+import shutil
+import tempfile
+import json
+import unittest
+from role_policy import RolePolicy
+
+
+class TestRolePolicy(unittest.TestCase):
+
+    def setUp(self):
+        self.example_policy_dir = 'tests/example.json'
+        self.test_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.test_dir)
+        pass
+
+    def test_load_save(self):
+        save_dir = f'{self.test_dir}/example_saved.json'
+        RolePolicy.fromfile(self.example_policy_dir).save(save_dir)
+
+        with open(self.example_policy_dir, 'r') as fd1:
+            example_json = json.load(fd1)
+
+        with open(save_dir, 'r') as fd2:
+            save_json = json.load(fd2)
+
+        self.assertEqual(example_json, save_json)

@@ -30,9 +30,75 @@ def matches_any(regex: Union[str, List[str], None], string) -> bool:
     return matches
 
 
+class ConditionBlock(BaseModel):
+    """ Condition Block
+        Reference: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition_operators.html
+    """
+    StringEquals: dict = None
+    StringEqualsIfExists: dict = None
+    StringNotEquals: dict = None
+    StringNotEqualsIfExists: dict = None
+    StringEqualsIgnoreCase: dict = None
+    StringEqualsIgnoreCaseIfExists: dict = None
+    StringNotEqualsIgnoreCase: dict = None
+    StringNotEqualsIgnoreCaseIfExists: dict = None
+    StringLike: dict = None
+    StringLikeIfExists: dict = None
+    StringNotLike: dict = None
+    StringNotLikeIfExists: dict = None
+    NumericEquals: dict = None
+    NumericEqualsIfExists: dict = None
+    NumericNotEquals: dict = None
+    NumericNotEqualsIfExists: dict = None
+    NumericLessThan: dict = None
+    NumericLessThanIfExists: dict = None
+    NumericLessThanEquals: dict = None
+    NumericLessThanEqualsIfExists: dict = None
+    NumericGreaterThan: dict = None
+    NumericGreaterThanIfExists: dict = None
+    NumericGreaterThanEquals: dict = None
+    NumericGreaterThanEqualsIfExists: dict = None
+    DateEquals: dict = None
+    DateEqualsIfExists: dict = None
+    DateNotEquals: dict = None
+    DateNotEqualsIfExists: dict = None
+    DateLessThan: dict = None
+    DateLessThanIfExists: dict = None
+    DateLessThanEquals: dict = None
+    DateLessThanEqualsIfExists: dict = None
+    DateGreaterThan: dict = None
+    DateGreaterThanIfExists: dict = None
+    DateGreaterThanEquals: dict = None
+    DateGreaterThanEqualsIfExists: dict = None
+    Bool: dict = None
+    BoolIfExists: dict = None
+    BinaryEquals: dict = None
+    BinaryEqualsIfExists: dict = None
+    IpAddress: dict = None
+    IpAddressIfExists: dict = None
+    NotIpAddress: dict = None
+    NotIpAddressIfExists: dict = None
+    ArnEquals: dict = None
+    ArnEqualsIfExists: dict = None
+    ArnNotEquals: dict = None
+    ArnNotEqualsIfExists: dict = None
+    ArnLike: dict = None
+    ArnLikeIfExists: dict = None
+    ArnNotLike: dict = None
+    ArnNotLikeIfExists: dict = None
+    Null: dict = None
+
+    @model_validator(mode="after")
+    def uniqueness(self):
+        if len(self.model_fields_set) != 1:
+            raise ValueError("One and only one field must be set")
+        return self
+
+
 class PrincipalBlock(BaseModel, validate_assignment=True):
     """ Representation of AWS IAM Policy Statement Principal Block
     """
+
     AWS: List[str] = None
     Federated: List[str] = None
     Service: List[str] = None
@@ -50,16 +116,16 @@ class Statement(BaseModel, validate_assignment=True):
     NotAction: Union[str, List[str]] = None
     Resource: Union[str, List[str]] = None
     NotResource: Union[str, List[str]] = None
-    Condition: dict = None
+    Condition: Union[ConditionBlock, List[ConditionBlock]] = None
 
     @model_validator(mode="after")
     def uniqueness(self):
         if not (self.Action is None) != (self.NotAction is None):
-            raise ValidationError()
+            raise ValidationError("Action OR NotAction must be defined")
         if self.Principal is not None and self.NotPrincipal is not None:
-            raise ValidationError()
+            raise ValidationError("Principal OR NotPrincipal must be defined")
         if not (self.Resource is None) != (self.NotResource is None):
-            raise ValidationError()
+            raise ValidationError("Resource OR NotResource must be defined")
         return self
 
     def _reaches(self, action, resource):
@@ -147,25 +213,3 @@ class RolePolicy(BaseModel, validate_assignment=True):
             data = json.load(fd)
 
         return RolePolicy(**data)
-
-
-class IAMRole(BaseModel):
-    """ Representation of AWS Role
-    """
-    Name: str
-    Policies: List[RolePolicy] = []
-
-    def is_allowed(self, action, resource):
-        allows = [p.allows(action, resource) for p in self.Policies]
-        if False in allows:
-            return False
-        if True in allows:
-            return True
-
-    def attach_policy(self, policy: RolePolicy):
-        self.Policies.append(policy)
-
-    def full_policy(self):
-        comp = sum(self.Policies)
-        comp.Id = f"Role{self.Name}CompositePolicy"
-        return comp
