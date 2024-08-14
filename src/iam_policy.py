@@ -4,6 +4,7 @@ import json
 import re
 from pydantic import BaseModel, model_validator, ValidationError
 from typing import Optional, Literal, List, Union
+from action_request import ActionRequest
 
 
 def match(regex: Union[str, None], string: str) -> bool:
@@ -147,10 +148,10 @@ class Statement(BaseModel, validate_assignment=True):
             return None
 
 
-class RolePolicy(BaseModel, validate_assignment=True):
+class IAMPolicy(BaseModel, validate_assignment=True):
     """ Representation of AWS IAM Policy
 
-    Reference: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_grammar.html
+    Reference: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies.html
     """
     Version: Literal["2008-10-17", "2012-10-17"] = None
     Id: Optional[str] = None
@@ -168,8 +169,10 @@ class RolePolicy(BaseModel, validate_assignment=True):
         with open(path, "w") as fd:
             json.dump(self.model_dump(exclude_unset=True), fd, indent=3)
 
-    def allows(self, action, resource):
+    def __evaluate(self, action_request: ActionRequest) -> bool:
         """ Whether policy allows an action/resource
+
+            Reference: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html
 
             Returns:
                 True: policy explicitly allows it
@@ -178,7 +181,7 @@ class RolePolicy(BaseModel, validate_assignment=True):
         """
         effects = []
         for statement in self.Statement:
-            effects.append(statement.effect(action, resource))
+            effects.append(statement.effect(action_request.Action, action_request.Resource))
 
         if "Deny" in effects:
             return False
@@ -187,19 +190,18 @@ class RolePolicy(BaseModel, validate_assignment=True):
         else:
             return None
 
+    def evaluate(self, action_request: ActionRequest):
+        return self.__evaluate(action_request)
+
     def __add__(self, new):
         if self.Version != new.Version:
             raise ValueError("Policies have different Version")
 
         statements = self.Statement + new.Statement
-        return RolePolicy(Version=self.Version, Statement=statements)
+        return IAMPolicy(Version=self.Version, Statement=statements)
 
     def __iadd__(self, new):
-        if self.Version != new.Version:
-            raise ValueError("Policies have different Version")
-
-        self.Statement += new.Statement
-        return self
+        return self + new.Statement
 
     def __radd__(self, new):
         if new == 0:
@@ -209,7 +211,49 @@ class RolePolicy(BaseModel, validate_assignment=True):
 
     @classmethod
     def fromfile(cls, path):
-        with open(path, "r") as fd:
-            data = json.load(fd)
+        try:
+            with open(path, "r") as fd:
+                data = json.load(fd)
+            return cls(**data)
+        
+        except (ValueError, ValidationError):
+            raise ValueError(f"{path} is not a valid {cls.__name__}")
 
-        return RolePolicy(**data)
+
+class IdentityBasedPolicy(IAMPolicy):
+    """ Identity-based policies are attached to an IAM identity (user, group of users, or role)
+        and grant permissions to IAM entities (users and roles).
+    """
+
+
+class ResourceBasedPolicy(IAMPolicy, validate_assignment=True):
+    """ Resource-based policies grant permissions to the principal (account, user, role, and
+        session principals such as role sessions and IAM federated users ) specified as the principal.
+    """
+
+    @model_validator(mode="after")
+    def principal(self):
+        print(self)
+        for statement in self.Statement:
+            print(statement)
+            if statement.Principal is None:
+                raise ValueError("ResourceBasedPolicies staements must have a defined Principal")
+        return self
+
+
+# class IAMPermissionsBoundary(IAMPolicy):
+#     """ Permissions boundaries are an advanced feature that sets the maximum permissions that an
+#         identity-based policy can grant to an IAM entity (user or role).
+#     """
+
+
+# class ServiceControlPolicy(IAMPolicy):
+#     """ Organizations SCPs specify the maximum permissions for an organization or organizational unit (OU).
+#     """
+
+
+# class SessionPolicy(IAMPolicy):
+#     """ Session policies are advanced policies that you pass as parameters when you programmatically
+#     create a temporary session for a role or federated user. To create a role session programmatically,
+#     use one of the AssumeRole* API operations.
+#     """

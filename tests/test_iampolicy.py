@@ -3,10 +3,10 @@ import shutil
 import tempfile
 import json
 import unittest
-from role_policy import RolePolicy
+from iam_policy import IdentityBasedPolicy, ResourceBasedPolicy
 
 
-class TestRolePolicy(unittest.TestCase):
+class TestIAMPolicy(unittest.TestCase):
 
     def setUp(self):
         self.example_policy_dir = 'tests/example.json'
@@ -18,7 +18,7 @@ class TestRolePolicy(unittest.TestCase):
 
     def test_load_save(self):
         save_dir = f'{self.test_dir}/example_saved.json'
-        RolePolicy.fromfile(self.example_policy_dir).save(save_dir)
+        IdentityBasedPolicy.fromfile(self.example_policy_dir).save(save_dir)
 
         with open(self.example_policy_dir, 'r') as fd1:
             example_json = json.load(fd1)

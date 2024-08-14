@@ -2,23 +2,23 @@
 
 from typing import List
 from pydantic import BaseModel
-from role_policy import RolePolicy
+from iam_policy import IAMPolicy
 
 
 class IAMRole(BaseModel):
     """ Representation of AWS Role
     """
     Name: str
-    Policies: List[RolePolicy] = []
+    Policies: List[IAMPolicy] = []
 
     def is_allowed(self, action, resource):
-        allows = [p.allows(action, resource) for p in self.Policies]
+        allows = [p.evaluate(action, resource) for p in self.Policies]
         if False in allows:
             return False
         if True in allows:
             return True
 
-    def attach_policy(self, policy: RolePolicy):
+    def attach_policy(self, policy: IAMPolicy):
         self.Policies.append(policy)
 
     def full_policy(self):
