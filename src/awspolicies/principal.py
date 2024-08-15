@@ -1,14 +1,13 @@
 # Author: santiago93echevarria@gmail.com
 
 from typing import List
-from pydantic import BaseModel
 from awspolicies.policy import IdentityBasedPolicy
+from awspolicies.resource import Resource
 
 
-class Principal(BaseModel):
+class Principal(Resource):
     """ Representation of AWS Principal
     """
-    Arn: str
     AttachedPolicies: List[IdentityBasedPolicy] = []
 
     def is_allowed(self, action, resource):
@@ -30,6 +29,37 @@ class Principal(BaseModel):
         return comp
 
 
-class Role(Principal):
-    """ Representation of AWS Role
+class IamRole(Principal):
+    """ Representation of IAM Role
     """
+    PrincipalHeader: str = "AWS"
+
+
+class IamUser(Principal):
+    """ Representation of IAM User
+    """
+    PrincipalHeader: str = "AWS"
+
+
+class IamGroup(Principal):
+    """ Representation of IAM Group
+    """
+    PrincipalHeader: str = "AWS"
+
+
+class AwsService(Principal):
+    """ Representation of AWS Service
+    """
+    PrincipalHeader: str = "Service"
+
+
+class FederetedUser(Principal):
+    """ Representation of Federeted User
+    """
+    PrincipalHeader: str = "Federated"
+
+
+class AwsAccount(Principal):
+    """ Representation of AWS Account
+    """
+    PrincipalHeader: str = "AWS"

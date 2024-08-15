@@ -4,6 +4,8 @@ import json
 import re
 from pydantic import BaseModel, model_validator, ValidationError
 from typing import Optional, Literal, List, Union
+from awspolicies.utils.logger import LoggerConfig
+log = LoggerConfig.get_logger(__name__)
 
 
 def match(regex: Union[str, None], string: str) -> bool:
@@ -14,8 +16,10 @@ def match(regex: Union[str, None], string: str) -> bool:
     """
     if regex is None:
         return False
-    pattern = re.escape(regex).replace(r"\*", r'[a-zA-Z0-9*:]*').replace(r"\?", r'[a-zA-Z0-9]{1}')
-    return bool(re.compile(pattern).fullmatch(string))
+    pattern = re.escape(regex).replace(r"\*", r'[a-zA-Z0-9*:/\-_.]*').replace(r"\?", r'[a-zA-Z0-9]{1}')
+    result = bool(re.compile(pattern).fullmatch(string))
+    log.debug(f"Regex='{regex}' String='{string}' => {result}")
+    return result
 
 
 def matches_any(regex: Union[str, List[str], None], string) -> bool:
@@ -131,9 +135,9 @@ class Statement(BaseModel, validate_assignment=True):
     def _reaches(self, action, resource):
         """ Returns True if action/resource pair is reached by statement
         """
-        return matches_any(self.Action, action) and matches_any(self.Resource, resource)
+        return matches_any(self.Action, action) and matches_any(self.Resource, resource.Arn)
 
-    def effect(self, action, resource):
+    def effect(self, action, resource, principal=None):
         """ Effect of statement on action/resource expression
 
             Returns:
@@ -141,10 +145,17 @@ class Statement(BaseModel, validate_assignment=True):
                 "Deny": Action/Resource is Denied by statement
                 None: Action/Resource is not reached by statement
         """
+        log.debug(resource.Arn)
         if self._reaches(action, resource):
             return self.Effect
         else:
             return None
+
+    def __repr__(self):
+        return json.dumps(self.model_dump(exclude_unset=True), indent=3)
+
+    def __str__(self):
+        return self.__repr__()
 
 
 class Policy(BaseModel, validate_assignment=True):
@@ -180,17 +191,27 @@ class Policy(BaseModel, validate_assignment=True):
         """
         effects = []
         for statement in self.Statement:
-            effects.append(statement.effect(action_request.Action, action_request.Resource))
+            effect = statement.effect(action_request.Action, action_request.Resource, action_request.Principal)
+            effects.append(effect)
+
+        log.debug(f'Policy evaluation returned {effects}')
 
         if "Deny" in effects:
-            return False
+            return "Deny"
         if "Allow" in effects:
-            return True
+            return "Allow"
         else:
             return None
 
     def evaluate(self, action_request):
+        log.debug(f'{action_request.Principal.Arn} {action_request.Action} on {action_request.Resource.Arn}')
         return self.__evaluate(action_request)
+
+    def __repr__(self):
+        return json.dumps(self.model_dump(exclude_unset=True), indent=3)
+
+    def __str__(self):
+        return self.__repr__()
 
     def __add__(self, new):
         if self.Version != new.Version:

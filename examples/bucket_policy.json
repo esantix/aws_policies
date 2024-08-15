@@ -5,11 +5,11 @@
             "Sid": "FullAccessToSpecificUser",
             "Effect": "Allow",
             "Principal": {
-                "AWS": "arn:aws:iam::123456789:user/ExampleUser"
+                "AWS": "arn:aws:iam::123456789:*"
             },
             "Action": "s3:AddTag",
             "Resource": [
-                "arn:aws:s3:::example-bucket/*"
+                "arn:aws:s3:::mybucket"
             ]
         }
     ]

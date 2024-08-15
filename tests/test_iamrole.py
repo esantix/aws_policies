@@ -1,9 +1,9 @@
 import unittest
-from awspolicies.principal import Role
+from awspolicies.principal import IAMRole
 
 
 class TestIAMRole(unittest.TestCase):
 
     def test_placeholder(self):
-        Role(Name="Fake_role", Arn="FAkeARN")
+        IAMRole(Name="Fake_role", Arn="FAkeARN")
         self.assertTrue(True)
