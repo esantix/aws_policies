@@ -12,10 +12,11 @@ jobs:
    steps:
    - name: checkout repo
      uses: actions/checkout@main
-   - name: Run unit tests
+   - name: Install self
      run: |
       pip install --upgrade pip
-      pip install -r requirements.dev.txt
       pip install -e .
-      coverage run -m unittest discover -s ./tests -p 'test_*.py'
-      coverage report -m
+   - name: Run unit tests
+     uses: esantix/workflows/.github/workflows/python_unittest.yml@main
+     with:
+       requirements: -r requirements.dev.txt
