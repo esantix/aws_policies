@@ -4,8 +4,8 @@ from pydantic import BaseModel, model_validator
 from typing import Any
 from awspolicies.resource import Resource
 from awspolicies.principal import Principal
-from awspolicies.utils.logger import LoggerConfig
-log = LoggerConfig.get_logger(__name__)
+from awspolicies.utils.logger import Logger
+log = Logger.get_logger(__name__)
 
 
 class ActionRequest(BaseModel):
@@ -26,28 +26,31 @@ class ActionRequest(BaseModel):
     def is_allowed(self):
         """ Define if action is allowed
         """
-        log.info(f'resource arn: {self.Resource.Arn}')
-        log.info(f'principal arn: {self.Principal.Arn}')
+        log.info(f'ActionRequest.Resource.Arn == {self.Resource.Arn}')
+        log.info(f'ActionRequest.Principal.Arn == {self.Principal.Arn}')
 
         resource_allows = []
         for rb_policy in self.Resource.AttachedPolicies:
             rb_allow = rb_policy.evaluate(self)
             resource_allows.append(rb_allow)
-            log.info(rb_allow)
-        log.info(f'Resources side allows: {resource_allows}')
+
+        log.info(f'ActionRequest.Resource.AttachedPolicies allows == {resource_allows}')
 
         principal_allows = []
         for ib_policy in self.Principal.AttachedPolicies:
             ib_allow = ib_policy.evaluate(self)
             principal_allows.append(ib_allow)
-            log.info(ib_allow)
-        log.info(f'Principal side allows: {principal_allows}')
+    
+        log.info(f'ActionRequest.Principal.AttachedPolicies allows == {principal_allows}')
 
         all_allows = principal_allows + resource_allows
 
         if "Deny" in all_allows:
-            return False
+            result = False
         elif "Allow" in all_allows:
-            return True
+            result = True
         else:
-            return None
+            result = None
+        
+        log.info(f'ActionRequest.is_allowed() == {result}')
+        return result

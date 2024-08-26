@@ -1,37 +1,12 @@
 # Author: santiago93echevarria@gmail.com
 
+import os
 import json
-import re
 from pydantic import BaseModel, model_validator, ValidationError
 from typing import Optional, Literal, List, Union
-from awspolicies.utils.logger import LoggerConfig
-log = LoggerConfig.get_logger(__name__)
-
-
-def match(regex: Union[str, None], string: str) -> bool:
-    """ Returns True if string matches AWS ARN's RegEx syntax
-
-        RegEx syntax: '*' representes a match for any alphanumeric string, that can include colon or asterisk
-        Reference: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_resource.html
-    """
-    if regex is None:
-        return False
-    pattern = re.escape(regex).replace(r"\*", r'[a-zA-Z0-9*:/\-_.]*').replace(r"\?", r'[a-zA-Z0-9]{1}')
-    result = bool(re.compile(pattern).fullmatch(string))
-    log.debug(f"Regex='{regex}' String='{string}' => {result}")
-    return result
-
-
-def matches_any(regex: Union[str, List[str], None], string) -> bool:
-    """ Returns True if string matches any AWS ARN's RegEx syntax
-    """
-    matches = False
-    if isinstance(regex, list):
-        for r in regex:
-            matches = matches or match(r, string)
-    else:
-        matches = match(regex, string)
-    return matches
+from awspolicies.utils.match import matches_any
+from awspolicies.utils.logger import Logger
+log = Logger.get_logger(__name__)
 
 
 class ConditionBlock(BaseModel):
@@ -145,7 +120,6 @@ class Statement(BaseModel, validate_assignment=True):
                 "Deny": Action/Resource is Denied by statement
                 None: Action/Resource is not reached by statement
         """
-        log.debug(resource.Arn)
         if self._reaches(action, resource):
             return self.Effect
         else:
@@ -176,6 +150,8 @@ class Policy(BaseModel, validate_assignment=True):
         return self
 
     def save(self, path):
+        if os.path.exists(path):
+            log.warn(f"{path} already exists. Overwriting")
         with open(path, "w") as fd:
             json.dump(self.model_dump(exclude_unset=True), fd, indent=3)
 
@@ -194,8 +170,6 @@ class Policy(BaseModel, validate_assignment=True):
             effect = statement.effect(action_request.Action, action_request.Resource, action_request.Principal)
             effects.append(effect)
 
-        log.debug(f'Policy evaluation returned {effects}')
-
         if "Deny" in effects:
             return "Deny"
         if "Allow" in effects:
@@ -205,7 +179,9 @@ class Policy(BaseModel, validate_assignment=True):
 
     def evaluate(self, action_request):
         log.debug(f'{action_request.Principal.Arn} {action_request.Action} on {action_request.Resource.Arn}')
-        return self.__evaluate(action_request)
+        result = self.__evaluate(action_request)
+        log.debug(f'Policy.evaluate == {result}')
+        return result
 
     def __repr__(self):
         return json.dumps(self.model_dump(exclude_unset=True), indent=3)

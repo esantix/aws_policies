@@ -25,4 +25,4 @@ action_request = ActionRequest(Action="s3:AddTag",
                                Resource=bucket,
                                Principal=role)
 
-print(f"Action is allowed? {action_request.is_allowed()}")
+action_request.is_allowed()
