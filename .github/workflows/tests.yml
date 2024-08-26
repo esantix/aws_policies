@@ -7,15 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
- test:
-   runs-on: ubuntu-latest
-   steps:
-   - name: checkout repo
-     uses: actions/checkout@main
-   - name: Run unit tests
-     run: |
-      pip install --upgrade pip
-      pip install -r requirements.dev.txt
-      pip install -e .
-      coverage run -m unittest discover -s ./tests -p 'test_*.py'
-      coverage report -m
+ unittests:
+   uses: esantix/workflows/.github/workflows/python_unittest.yml@main
+   with:
+     requirements: -r requirements.dev.txt -e .
