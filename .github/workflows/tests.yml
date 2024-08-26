@@ -8,15 +8,6 @@ on:
 
 jobs:
  test:
-   runs-on: ubuntu-latest
-   steps:
-   - name: checkout repo
-     uses: actions/checkout@main
-   - name: Install self
-     run: |
-      pip install --upgrade pip
-      pip install -e .
-   - name: Run unit tests
-     uses: esantix/workflows/.github/workflows/python_unittest.yml@main
-     with:
-       requirements: -r requirements.dev.txt
+   uses: esantix/workflows/.github/workflows/python_unittest.yml@main
+   with:
+     requirements: -r requirements.dev.txt -e .
