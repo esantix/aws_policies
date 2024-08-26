@@ -8,6 +8,6 @@ on:
 
 jobs:
  unittests:
-   uses: esantix/workflows/.github/workflows/python_unittest.yml@main
+   uses: esantix/workflows/.github/workflows/python_unittest.yml@v1
    with:
      requirements: -r requirements.dev.txt .
