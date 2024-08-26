@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
- test:
+ unittests:
    uses: esantix/workflows/.github/workflows/python_unittest.yml@main
    with:
      requirements: -r requirements.dev.txt -e .
