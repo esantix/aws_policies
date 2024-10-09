@@ -2,10 +2,11 @@
 
 import os
 import json
-from pydantic import BaseModel, model_validator, ValidationError
+from pydantic import BaseModel, model_validator, ValidationError, field_serializer, field_validator
 from typing import Optional, Literal, List, Union
 from awspolicies.utils.match import matches_any
 from awspolicies.utils.logger import Logger
+from awspolicies.effect import Allow, Deny, NoEffect
 log = Logger.get_logger(__name__)
 
 
@@ -90,12 +91,15 @@ class Statement(BaseModel, validate_assignment=True):
     Sid: str = None
     Principal: Union[Literal["*"], PrincipalBlock] = None
     NotPrincipal: Union[Literal["*"], PrincipalBlock] = None
-    Effect: Literal["Allow", "Deny"]
+    Effect: Union[Allow, Deny, str]
     Action: Union[str, List[str]] = None
     NotAction: Union[str, List[str]] = None
     Resource: Union[str, List[str]] = None
     NotResource: Union[str, List[str]] = None
     Condition: Union[ConditionBlock, List[ConditionBlock]] = None
+
+    class Config:
+        arbitrary_types_allowed = True
 
     @model_validator(mode="after")
     def uniqueness(self):
@@ -103,27 +107,60 @@ class Statement(BaseModel, validate_assignment=True):
             raise ValidationError("Action OR NotAction must be defined")
         if self.Principal is not None and self.NotPrincipal is not None:
             raise ValidationError("Principal OR NotPrincipal must be defined")
-        if not (self.Resource is None) != (self.NotResource is None):
-            raise ValidationError("Resource OR NotResource must be defined")
         return self
 
-    def _reaches(self, action, resource):
+    @field_validator('Effect')
+    def deserialize_Effect(cls, Effect: str):
+        if Effect == "Allow":
+            return Allow
+        elif Effect == "Deny":
+            return Deny
+        else:
+            raise ValueError()
+
+    @field_serializer('Effect')
+    def serialize_Effect(self, Effect: str, _info):
+        if Effect is Allow:
+            return "Allow"
+        elif Effect is Deny:
+            return "Deny"
+        else:
+            raise ValueError()
+
+    def _reaches(self, action, resource, principal=None):
         """ Returns True if action/resource pair is reached by statement
         """
-        return matches_any(self.Action, action) and matches_any(self.Resource, resource.Arn)
+
+        action_match = matches_any(self.Action, action)
+        if self.Resource is None:
+            resource_match = True
+        else:
+            resource_match = matches_any(self.Resource, resource.Arn)
+
+        if principal is None or self.Principal is None:  # Principal is only required for ResourceBasedPolicy
+            principal_match = True
+        else:
+            principal_match = False
+            if self.Principal.AWS:
+                principal_match = principal_match or matches_any(self.Principal.AWS, principal.Arn)
+            if self.Principal.Service and hasattr(principal, 'ServiceType'):
+                principal_match = principal_match or matches_any(self.Principal.Service, principal.ServiceType)
+          
+        reaches = action_match and resource_match and principal_match
+        return reaches
 
     def effect(self, action, resource, principal=None):
         """ Effect of statement on action/resource expression
 
             Returns:
-                "Allow": Action/Resource is Allowed by statement
-                "Deny": Action/Resource is Denied by statement
-                None: Action/Resource is not reached by statement
+                Allow: Action/Resource is Allowed by statement
+                Deny: Action/Resource is Denied by statement
+                NoEffect: Action/Resource is not reached by statement
         """
-        if self._reaches(action, resource):
+        if self._reaches(action, resource, principal):
             return self.Effect
         else:
-            return None
+            return NoEffect
 
     def __repr__(self):
         return json.dumps(self.model_dump(exclude_unset=True), indent=3)
@@ -167,17 +204,19 @@ class Policy(BaseModel, validate_assignment=True):
         """
         effects = []
         for statement in self.Statement:
-            effect = statement.effect(action_request.Action, action_request.Resource, action_request.Principal)
+            effect = statement.effect(action=action_request.Action,
+                                      resource=action_request.Resource,
+                                      principal=action_request.Principal)
             effects.append(effect)
 
-        if "Deny" in effects:
-            return "Deny"
-        if "Allow" in effects:
-            return "Allow"
+        if Deny in effects:
+            return Deny
+        elif Allow in effects:
+            return Allow
         else:
-            return None
+            return NoEffect
 
-    def evaluate(self, action_request):
+    def effect(self, action_request):
         log.debug(f'{action_request.Principal.Arn} {action_request.Action} on {action_request.Resource.Arn}')
         result = self.__evaluate(action_request)
         log.debug(f'Policy.evaluate == {result}')

@@ -1,28 +1,58 @@
-from awspolicies.principal import IamRole
-from awspolicies.policy import IdentityBasedPolicy, ResourceBasedPolicy
-from awspolicies.action_request import ActionRequest
-from awspolicies.resource import Resource
+from awspolicies.principal import IamRole, AwsService, Resource
+from awspolicies.policy import ResourceBasedPolicy, IdentityBasedPolicy
+from awspolicies.request_context import RequestContext
 
 ACCOUNT = "123456789012"
 REGION = "us-east-1"
 
 
-# Role with policy
-role = IamRole(Arn=f"arn:aws:iam::{ACCOUNT}:role/santiago",
-               Account=ACCOUNT,
-               Region=REGION
-               )
-role_policy = IdentityBasedPolicy.fromfile("examples/role_policy.json")
-role.attach_policy(role_policy)
+# ROLE
+role = IamRole(Name="test-role",
+               Arn=f"arn:aws:iam::{ACCOUNT}:role/test-role")
+role_policy_json = {"Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "s3:AddTafg"
+                            ],
+                            "Resource": "*"
+                        }
+                    ]}
+role_trust_policy_json = {"Version": "2012-10-17",
+                          "Statement": [
+                              {
+                                  "Effect": "Allow",
+                                  "Principal": {
+                                      "Service": "lambda.amazonaws.com"
+                                  },
+                                  "Action": "sts:AssumeRole"
+                              }
+                          ]}
 
-# Resource with policy
-bucket = Resource(Arn="arn:aws:s3:::mybucket")
-bucket_policy = ResourceBasedPolicy.fromfile("examples/bucket_policy.json")
-bucket.attach_policy(bucket_policy)
+# Permisos del rol
+role.attach_policy(IdentityBasedPolicy(**role_policy_json))
 
-# Action request
-action_request = ActionRequest(Action="s3:AddTag",
-                               Resource=bucket,
-                               Principal=role)
+# Trust policy del permiso
+role.attach_policy(ResourceBasedPolicy(**role_trust_policy_json))
 
-action_request.is_allowed()
+
+# LAMBDA
+awslambda = AwsService(Name="test-role",
+                            ServiceType="lambda.amazonaws.com",
+                            Arn=f"arn:aws:lambda:{REGION}:{ACCOUNT}:function:test-lambda")
+
+# BUCKET
+bucket = Resource(Arn="arn:aws:s3:::test-bucket")
+
+with awslambda.assume_role(role):
+    r = RequestContext(
+        Action="s3:AddTag",
+        Resource=bucket,
+        Principal=awslambda
+    )
+
+    print(r.validate())
+
+
+

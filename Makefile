@@ -25,7 +25,7 @@ setup: $(VENV)/bin/activate
 run: setup
 	@$(PYTHON) examples/action_example.py
 
-test: setup
+test:
 	@echo "Running unit tests..."
 	@coverage run -m unittest discover -s ./tests -p 'test_*.py'
 	@coverage report -m
