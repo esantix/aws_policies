@@ -180,11 +180,15 @@ class Policy(BaseModel, validate_assignment=True):
 
     @model_validator(mode="after")
     def length(self):
-        MAX_LENGTH = 10240
+        MAX_LENGTH = 10240000000
         json_length = len(json.dumps(self.model_dump(exclude_unset=True)).replace(" ", ""))
         if json_length > MAX_LENGTH:
             raise ValueError(f"Policy JSON exceeds {MAX_LENGTH}. (#Chars={json_length}, #Statements={len(self.Statement)})")
         return self
+
+    def add_statement(self, statement):
+        """ Add a statement to the policy"""
+        self.Statement.append(statement)
 
     def save(self, path):
         if os.path.exists(path):

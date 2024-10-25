@@ -1,5 +1,5 @@
 .ONESHELL:
-.PHONY: setup test install run
+.PHONY: setup test install run build
 
 .DEFAULT_GOAL := run
 
@@ -34,3 +34,10 @@ install: setup
 	@echo "Installing self..."
 	@$(PIP) install -e . 
 	@$(PIP) list | grep AWSPolicies
+
+build: clear
+	@$(PYTHON) src/builder/policies_builder.py
+
+clear:
+	@echo "Clearing build files..."
+	@rm -rf ./data/roles/*

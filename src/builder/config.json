@@ -1,0 +1,51 @@
+{
+    "ServiceGroups": {
+        "Storage": [
+            "s3",
+            "s3-outposts",
+            "ebs",
+            "efs",
+            "fsx",
+            "storagegateway"
+        ],
+        "Compute": [
+            "ec2",
+            "ec2-instance-connect",
+            "ec2-instance-selector",
+            "ec2-instance-connect-message"
+        ],
+        "Container": [
+            "ecs",
+            "eks",
+            "ecr",
+            "fargate"
+        ],
+        "Observability": [
+            "cloudwatch",
+            "cloudwatch-logs",
+            "cloudwatch-events",
+            "cloudwatch-logs-insights",
+            "cloudwatch-synthetics",
+            "cloudwatch-application-insights"
+        ],
+        "Database": [
+            "rds",
+            "rds-data",
+            "rds-db",
+            "rds-db-proxy",
+            "rds-db-instance",
+            "rds-db-snapshot",
+            "rds-db-cluster",
+            "rds-db-cluster-instance",
+            "rds-db-cluster-snapshot",
+            "rds-db-security-group",
+            "rds-db-parameter-group",
+            "rds-db-subnet-group",
+            "rds-db-option-group",
+            "rds-db-proxy-target-group"
+        ]
+    },
+    "IncludeNoGroup": true,
+    "PrefixGroupingExcluded": []
+
+}

@@ -69,6 +69,8 @@ class RequestContext(BaseModel):
         return result
 
     def validate(self):
+        """ Validate if action is allowed
+        """
         if self.__is_allowed():
             return True
         else:

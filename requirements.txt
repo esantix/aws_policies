@@ -1,2 +1,4 @@
 pydantic==2.8.2
 colorlog==6.8.2
+pandas
+openpyxl
