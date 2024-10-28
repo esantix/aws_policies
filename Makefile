@@ -10,6 +10,8 @@ PIP=$(VENV)/bin/pip
 export PYTHONPATH=src
 export LOG_LEVEL=DEBUG
 
+include .env
+
 $(VENV)/bin/activate: requirements.txt requirements.dev.txt
 	@echo "Setting up environment..."
 	@deactivate 2>/dev/null

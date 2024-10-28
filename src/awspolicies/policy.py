@@ -190,6 +190,10 @@ class Policy(BaseModel, validate_assignment=True):
         """ Add a statement to the policy"""
         self.Statement.append(statement)
 
+    def to_json(self):
+        """ Returns JSON representation of policy"""
+        return json.dumps(self.model_dump(exclude_unset=True), indent=3)
+
     def save(self, path):
         if os.path.exists(path):
             log.warn(f"{path} already exists. Overwriting")
